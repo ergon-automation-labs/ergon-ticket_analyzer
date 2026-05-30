@@ -22,6 +22,12 @@ defmodule BotArmyTicketAnalyzer.NATS.Consumer do
       subject: "bot_army.analysis.tickets.overnight",
       type: :request_reply,
       description: "Analyze all open tickets: find blockers, dependencies, SLAs, critical path"
+    },
+    %{
+      subject: "bot_army.synthesis.ticket.>",
+      type: :request_reply,
+      description:
+        "Research and synthesize findings about a specific ticket (finds root cause, related code, fix patterns)"
     }
   ]
 
@@ -95,7 +101,13 @@ defmodule BotArmyTicketAnalyzer.NATS.Consumer do
             handle_overnight_analysis(msg, state)
 
           _ ->
-            Logger.debug("Unknown request/reply subject: #{msg.topic}")
+            # Check if it's a synthesis request
+            if String.starts_with?(msg.topic, "bot_army.synthesis.ticket.") do
+              ticket_id = String.replace_prefix(msg.topic, "bot_army.synthesis.ticket.", "")
+              handle_research_synthesis(ticket_id, msg, state)
+            else
+              Logger.debug("Unknown request/reply subject: #{msg.topic}")
+            end
         end
       else
         # Handle pub/sub messages
@@ -140,6 +152,15 @@ defmodule BotArmyTicketAnalyzer.NATS.Consumer do
 
   defp handle_overnight_analysis(msg, state) do
     response = BotArmyTicketAnalyzer.NATS.Handler.handle_overnight_analysis_request(msg.body)
+
+    if state.conn do
+      Gnat.pub(state.conn, msg.reply_to, response)
+    end
+  end
+
+  defp handle_research_synthesis(ticket_id, msg, state) do
+    response =
+      BotArmyTicketAnalyzer.NATS.ResearchHandler.handle_research_request(ticket_id, msg.body)
 
     if state.conn do
       Gnat.pub(state.conn, msg.reply_to, response)
