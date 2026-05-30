@@ -13,7 +13,12 @@
                         'Elixir.BotArmyTicketAnalyzer.NATS.Handler',
                         'Elixir.BotArmyTicketAnalyzer.PulsePublisher',
                         'Elixir.BotArmyTicketAnalyzer.Skills.Example',
-                        'Elixir.BotArmyTicketAnalyzer.TicketAnalyzer']},
+                        'Elixir.BotArmyTicketAnalyzer.TicketAnalyzer',
+                        'Elixir.BotArmyTicketAnalyzer.TicketSources.GitHubSource',
+                        'Elixir.BotArmyTicketAnalyzer.TicketSources.JiraSource',
+                        'Elixir.BotArmyTicketAnalyzer.TicketSources.LinearSource',
+                        'Elixir.BotArmyTicketAnalyzer.TicketSources.MockSource',
+                        'Elixir.BotArmyTicketAnalyzer.TicketSources.TicketSource']},
               {registered,[]},
               {vsn,"0.1.0"},
               {mod,{'Elixir.BotArmyTicketAnalyzer.Application',[]}}]}.
