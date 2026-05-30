@@ -18,9 +18,11 @@ defmodule BotArmyTicketAnalyzer.NATS.Consumer do
 
   # Register subjects with their metadata for runtime discovery
   @subjects [
-    # Add your subjects here:
-    # %{subject: "example.task.list", type: :request_reply, description: "List tasks"},
-    # %{subject: "example.event.>", type: :subscribe, description: "Example events"}
+    %{
+      subject: "bot_army.analysis.tickets.overnight",
+      type: :request_reply,
+      description: "Analyze all open tickets: find blockers, dependencies, SLAs, critical path"
+    }
   ]
 
   def start_link(opts) do
@@ -89,9 +91,9 @@ defmodule BotArmyTicketAnalyzer.NATS.Consumer do
       # Handle request/reply patterns
       if msg.reply_to do
         case msg.topic do
-          # Add your request/reply handlers here
-          # "example.task.list" ->
-          #   handle_task_list(msg, state)
+          "bot_army.analysis.tickets.overnight" ->
+            handle_overnight_analysis(msg, state)
+
           _ ->
             Logger.debug("Unknown request/reply subject: #{msg.topic}")
         end
@@ -135,18 +137,12 @@ defmodule BotArmyTicketAnalyzer.NATS.Consumer do
   end
 
   # Request/reply handlers
-  # defp handle_task_list(msg, state) do
-  #   response =
-  #     case get_tasks() do
-  #       {:ok, tasks} ->
-  #         BotArmyRuntime.NATS.Reply.ok(%{"tasks" => tasks})
-  #
-  #       {:error, reason} ->
-  #         BotArmyRuntime.NATS.Reply.error(inspect(reason), :list_failed)
-  #     end
-  #
-  #   if state.conn do
-  #     Gnat.pub(state.conn, msg.reply_to, response)
-  #   end
-  # end
+
+  defp handle_overnight_analysis(msg, state) do
+    response = BotArmyTicketAnalyzer.NATS.Handler.handle_overnight_analysis_request(msg.body)
+
+    if state.conn do
+      Gnat.pub(state.conn, msg.reply_to, response)
+    end
+  end
 end
